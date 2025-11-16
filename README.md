@@ -20,5 +20,3 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_AfbcQ240N2kVIqNMC2131
 3. Run the app:
    `npm run dev`
 =======
->>>>>>> 82ee404b343061a3569a9d288deaf80974b05dc6
-"# buildAIDeployEarnMoney" 
