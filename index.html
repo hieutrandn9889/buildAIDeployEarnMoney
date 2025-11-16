@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monthly Finance Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#10b981',
+                        danger: '#ef4444',
+                        background: '#f8fafc',
+                        card: '#ffffff',
+                        'text-primary': '#1e293b',
+                        'text-secondary': '#64748b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .modal {
+            transition: opacity 0.3s ease;
+        }
+        .pie-chart {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background-image: conic-gradient(#ef4444 0deg, #4f46e5 0deg);
+            transition: background-image 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-background text-text-primary">
+
+    <div class="min-h-screen p-4 sm:p-6 lg:p-8">
+        <div class="max-w-7xl mx-auto">
+            <header class="mb-8">
+                <h1 class="text-4xl font-bold text-gray-800 tracking-tight">Monthly Finance Tracker</h1>
+                <p class="text-lg text-text-secondary mt-1">A clear view of your financial health.</p>
+            </header>
+
+            <main>
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="summary-container">
+                    <!-- Summary cards will be rendered here by JS -->
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="my-8 p-6 bg-card rounded-xl shadow-md">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Actions</h2>
+                    <div class="flex justify-center">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
+                            <button data-type="Income" class="add-transaction-btn flex items-center justify-center w-full px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-secondary hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-transform transform hover:scale-105">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                Add Income
+                            </button>
+                            <button data-type="Expense" class="add-transaction-btn flex items-center justify-center w-full px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-danger hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-transform transform hover:scale-105">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                Add Expense
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions and Chart -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <div class="bg-card p-6 rounded-xl shadow-md">
+                            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Recent Transactions</h2>
+                            <ul class="divide-y divide-gray-200" id="transaction-list">
+                                <!-- Transaction items will be rendered here -->
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-1">
+                        <div class="bg-card p-6 rounded-xl shadow-md h-full flex flex-col items-center">
+                            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Spending Breakdown</h2>
+                            <div class="flex-grow flex flex-col items-center justify-center text-center text-text-secondary" id="chart-container">
+                                <!-- Pie chart will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div id="modal-header" class="p-5 rounded-t-lg">
+                <h2 id="modal-title" class="text-xl font-bold"></h2>
+            </div>
+            <form id="transaction-form" class="p-6 space-y-4">
+                <input type="hidden" id="transaction-type" />
+                <div>
+                    <label for="amount" class="block text-sm font-medium text-gray-700">Amount</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <span class="text-gray-500 sm:text-sm">$</span>
+                        </div>
+                        <input type="number" id="amount" class="block w-full rounded-md border-gray-300 pl-7 pr-2 py-2 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="0.00" required />
+                    </div>
+                </div>
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                    <input type="text" id="description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Salary, Groceries" required />
+                </div>
+                <p id="modal-error" class="text-sm text-red-600"></p>
+                <div class="pt-2 flex justify-end space-x-3">
+                    <button type="button" id="cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submit-btn" class="px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
+                        Add Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const transactionList = document.getElementById('transaction-list');
+    const summaryContainer = document.getElementById('summary-container');
+    const chartContainer = document.getElementById('chart-container');
+    const modal = document.getElementById('modal');
+    const modalHeader = document.getElementById('modal-header');
+    const modalTitle = document.getElementById('modal-title');
+    const transactionForm = document.getElementById('transaction-form');
+    const transactionTypeInput = document.getElementById('transaction-type');
+    const amountInput = document.getElementById('amount');
+    const descriptionInput = document.getElementById('description');
+    const submitBtn = document.getElementById('submit-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const modalError = document.getElementById('modal-error');
+    
+    let transactions = JSON.parse(localStorage.getItem('financeTrackerTransactions')) || [];
+
+    const typeStyles = {
+        Income: { bg: 'bg-green-100', text: 'text-green-800', ring: 'focus:ring-green-500', button: 'bg-secondary hover:bg-green-600' },
+        Expense: { bg: 'bg-red-100', text: 'text-red-800', ring: 'focus:ring-red-500', button: 'bg-danger hover:bg-red-600' }
+    };
+
+    function saveTransactions() {
+        localStorage.setItem('financeTrackerTransactions', JSON.stringify(transactions));
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    }
+
+    function renderSummary({ totalIncome, totalExpenses, totalSavings }) {
+        const savingsColor = totalSavings >= 0 ? 'text-primary' : 'text-orange-500';
+        summaryContainer.innerHTML = `
+            <div class="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 transition-transform transform hover:-translate-y-1">
+                <div class="flex-shrink-0 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 0l-7 7m7-7l7 7" /></svg></div>
+                <div><p class="text-sm font-medium text-text-secondary">Total Income</p><p class="text-2xl font-bold text-secondary">${formatCurrency(totalIncome)}</p></div>
+            </div>
+            <div class="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 transition-transform transform hover:-translate-y-1">
+                <div class="flex-shrink-0 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m0 0l-7-7m7 7l7-7" /></svg></div>
+                <div><p class="text-sm font-medium text-text-secondary">Total Expenses</p><p class="text-2xl font-bold text-danger">${formatCurrency(totalExpenses)}</p></div>
+            </div>
+            <div class="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 transition-transform transform hover:-translate-y-1">
+                <div class="flex-shrink-0 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ${savingsColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg></div>
+                <div><p class="text-sm font-medium text-text-secondary">Total Savings</p><p class="text-2xl font-bold ${savingsColor}">${formatCurrency(totalSavings)}</p></div>
+            </div>
+        `;
+    }
+
+    function renderTransactions() {
+        if (transactions.length === 0) {
+            transactionList.innerHTML = `<div class="text-center py-10"><p class="text-text-secondary">No transactions yet.</p><p class="text-sm text-gray-400 mt-1">Add one using the buttons above!</p></div>`;
+            return;
+        }
+
+        transactionList.innerHTML = transactions
+            .map(t => {
+                const isIncome = t.type === 'Income';
+                const color = isIncome ? 'text-secondary' : 'text-danger';
+                const sign = isIncome ? '+' : '-';
+                const icon = isIncome 
+                    ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 0l-7 7m7-7l7 7" /></svg>`
+                    : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m0 0l-7-7m7 7l7-7" /></svg>`;
+                
+                return `
+                    <li class="flex items-center justify-between py-4 px-4 hover:bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-4">
+                            <span class="p-2 rounded-full bg-gray-100 ${color}">${icon}</span>
+                            <div>
+                                <p class="font-semibold text-text-primary capitalize">${t.description}</p>
+                                <p class="text-sm text-text-secondary">${new Date(t.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            </div>
+                        </div>
+                        <p class="font-semibold ${color}">${sign} ${formatCurrency(t.amount)}</p>
+                    </li>
+                `;
+            }).join('');
+    }
+
+    function renderPieChart({ totalExpenses, totalSavings }) {
+        if (totalExpenses <= 0 && totalSavings <= 0) {
+            chartContainer.innerHTML = `
+                <div>
+                    <p>No spending data to display.</p>
+                    <p class="text-sm text-gray-400 mt-1">Add an expense to see the chart.</p>
+                </div>`;
+            return;
+        }
+
+        const total = totalExpenses + Math.max(0, totalSavings);
+        const expensePercentage = total > 0 ? (totalExpenses / total) * 100 : 0;
+        const expenseAngle = (expensePercentage / 100) * 360;
+
+        chartContainer.innerHTML = `
+            <div id="pie-chart" class="pie-chart" style="background-image: conic-gradient(#ef4444 ${expenseAngle}deg, #4f46e5 ${expenseAngle}deg)"></div>
+            <div class="mt-4 space-y-2 text-left w-full">
+                <div class="flex items-center"><span class="h-3 w-3 rounded-full bg-danger mr-2"></span>Expenses: ${formatCurrency(totalExpenses)}</div>
+                <div class="flex items-center"><span class="h-3 w-3 rounded-full bg-primary mr-2"></span>Savings: ${formatCurrency(Math.max(0, totalSavings))}</div>
+            </div>
+        `;
+    }
+
+    function updateUI() {
+        const totalIncome = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
+        const totalExpenses = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
+        const totalSavings = totalIncome - totalExpenses;
+        
+        renderSummary({ totalIncome, totalExpenses, totalSavings });
+        renderTransactions();
+        renderPieChart({ totalExpenses, totalSavings });
+    }
+
+    function openModal(type) {
+        transactionForm.reset();
+        modalError.textContent = '';
+        const style = typeStyles[type];
+        
+        modalHeader.className = `p-5 rounded-t-lg ${style.bg}`;
+        modalTitle.className = `text-xl font-bold ${style.text}`;
+        modalTitle.textContent = `Add New ${type}`;
+        submitBtn.className = `px-4 py-2 text-sm font-medium text-white ${style.button} border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${style.ring}`;
+        submitBtn.textContent = `Add ${type}`;
+        transactionTypeInput.value = type;
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+    }
+
+    document.querySelectorAll('.add-transaction-btn').forEach(button => {
+        button.addEventListener('click', () => openModal(button.dataset.type));
+    });
+
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    transactionForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const type = transactionTypeInput.value;
+        const amount = parseFloat(amountInput.value);
+        const description = descriptionInput.value.trim();
+
+        if (isNaN(amount) || amount <= 0) {
+            modalError.textContent = 'Please enter a valid, positive amount.';
+            return;
+        }
+        if (!description) {
+            modalError.textContent = 'Please enter a description.';
+            return;
+        }
+
+        const newTransaction = {
+            id: crypto.randomUUID(),
+            type,
+            amount,
+            description,
+            date: new Date().toISOString()
+        };
+
+        transactions.push(newTransaction);
+        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        saveTransactions();
+        updateUI();
+        closeModal();
+    });
+
+    // Initial Render
+    updateUI();
+});
+</script>
+</body>
+</html>

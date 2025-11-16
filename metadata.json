@@ -1,0 +1,5 @@
+{
+  "name": "Monthly Finance Tracker",
+  "description": "A simple, clean interface to track your monthly income and expenses, built as a single HTML file with embedded CSS and JavaScript for easy hosting. All data is stored locally in your browser.",
+  "requestFramePermissions": []
+}
